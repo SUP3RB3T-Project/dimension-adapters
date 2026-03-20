@@ -1,53 +1,68 @@
-import { SimpleAdapter, FetchOptions, Dependencies } from "../adapters/types";
+import { SimpleAdapter, FetchOptions, Dependencies } from "../adapters/types";                                                                                                              
 import { CHAIN } from "../helpers/chains";
-import { getSolanaReceived } from "../helpers/token";
-import { METRIC } from "../helpers/metrics";
+import { getSolanaReceived } from "../helpers/token";                                                                                                                                       
+import { METRIC } from "../helpers/metrics";                                                                                                                                                
+                                                                                                                                                                                              
+const TREASURY_ADDRESS = "MoEcUAUh3zC8gGMh2wiRJx3ShbAoHqpxLKeGfJ1KFcm";                                                                                                                     
+const TREASURY2_ADDRESS = "MoEcUAUh3zC8gGMh2wiRJx3ShbAoHqpxLKeGfJ1KFcm";                                                                                                                    
+const MANAGER_ADDRESS = "MoEcUAUh3zC8gGMh2wiRJx3ShbAoHqpxLKeGfJ1KFcm";                                                                                                                      
+                                                                                                                                                                                              
+const fetch = async (options: FetchOptions) => {                                                                                                                                            
+  const { createBalances } = options;                                                                                                                                                       
+  const dailyFees = createBalances();                     
+                                                                                                                                                                                              
+  const [received, received2, receivedManager] = await Promise.all([                                                                                                                        
+    getSolanaReceived({                                                                                                                                                                     
+      options,                                                                                                                                                                              
+      target: TREASURY_ADDRESS,                           
+    }),
+    getSolanaReceived({
+      options,
+      target: TREASURY2_ADDRESS,
+    }),                                                                                                                                                                                     
+    getSolanaReceived({
+      options,                                                                                                                                                                              
+      target: MANAGER_ADDRESS,                            
+    }),                                                                                                                                                                                     
+  ]);                                                     
 
-const TREASURY_ADDRESS = "MoEcUAUh3zC8gGMh2wiRJx3ShbAoHqpxLKeGfJ1KFcm";
-
-const fetch = async (options: FetchOptions) => {
-  const { createBalances } = options;
-  const dailyFees = createBalances();
-  
-  const received = await getSolanaReceived({
-    options,
-    target: TREASURY_ADDRESS,
-  });
-  
-  dailyFees.addBalances(received, METRIC.SERVICE_FEES);
-
-  return {
-    dailyFees,
+  dailyFees.addBalances(received, METRIC.SERVICE_FEES);                                                                                                                                     
+  dailyFees.addBalances(received2, METRIC.SERVICE_FEES);
+  dailyFees.addBalances(receivedManager, METRIC.SERVICE_FEES);                                                                                                                              
+                                                            
+  return {                                                                                                                                                                                  
+    dailyFees,                                            
     dailyRevenue: dailyFees,
     dailyProtocolRevenue: dailyFees,
-  };
-};
-
-const breakdownMethodology = {
-  Fees: {
-    [METRIC.SERVICE_FEES]: "Platform commission charged on each betting match pot, calculated as 3% of the total pot value. Collected when betting matches conclude and transferred to the protocol treasury.",
+  };                                                                                                                                                                                        
+};                                                                                                                                                                                          
+                                                                                                                                                                                              
+const breakdownMethodology = {                                                                                                                                                              
+  Fees: {                                                 
+    [METRIC.SERVICE_FEES]: "Platform commission charged on each betting match pot, calculated as 3% of the total pot value. Collected when betting matches conclude and transferred to the 
+protocol treasury.",                                                                                                                                                                        
   },
-  Revenue: {
+  Revenue: {                                                                                                                                                                                
     [METRIC.SERVICE_FEES]: "All betting platform fees are retained by the protocol as there are no intermediaries or supply-side participants to pay out.",
-  },
-  ProtocolRevenue: {
+  },                                                                                                                                                                                        
+  ProtocolRevenue: {                                      
     [METRIC.SERVICE_FEES]: "100% of betting platform fees are collected by the protocol treasury to fund operations and development.",
-  },
+  },                                                                                                                                                                                        
 };
-
-const adapter: SimpleAdapter = {
+                                                                                                                                                                                              
+const adapter: SimpleAdapter = {                          
   version: 2,
   pullHourly: true,
   fetch,
   chains: [CHAIN.SOLANA],
-  start: "2025-02-20",
-  dependencies: [Dependencies.ALLIUM],
-  methodology: {
-    Fees: "Platform fees (3%) collected from betting match pots on the RoyalBet Telegram bot.",
-    Revenue: "All fees are protocol revenue.",
+  start: "2025-02-20",                                                                                                                                                                      
+  dependencies: [Dependencies.ALLIUM],                                                                                                                                                      
+  methodology: {                                                                                                                                                                            
+    Fees: "Platform fees (3%) collected from betting match pots on the RoyalBet Telegram bot.",                                                                                             
+    Revenue: "All fees are protocol revenue.",                                                                                                                                              
     ProtocolRevenue: "All fees are collected by the protocol treasury.",
-  },
-  breakdownMethodology,
-};
-
-export default adapter;
+  },                                                                                                                                                                                        
+  breakdownMethodology,                                                                                                                                                                     
+};                                                                                                                                                                                          
+                                                                                                                                                                                              
+export default adapter;                                                                                                                                                                     
